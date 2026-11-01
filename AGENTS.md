@@ -17,6 +17,8 @@ Agent 工作目录为本仓库根目录。先读取根 `README.md` 与本文件�
 4. 如果 `.gitmodules`、预期 URL 或 gitlink 缺失/冲突，说明模板接入异常并停止该能力调用，不猜一个版本自动补建。网络或权限失败时保留结果，不声称已恢复。
 5. 恢复后重新核对 submodule HEAD 与父仓 gitlink 一致，再读取 Manifest。Python 工具需要 Python 3.10+；Windows 使用 `py -3`，Linux/macOS 使用 `python3`，不为通过初始化静默安装或改变本机环境。
 
+当前 Manifest 为 schema v2 时，若用户要求“检查或更新基础设施 submodule”，先读取 `consumer.submodule-update` 的 `workflows/submodule-update/ENTRYPOINT.md`；只检查时保持只读，更新时必须展示明确 commit 和变更计划并等待用户确认。不得使用 `git submodule update --remote` 自动跟随远端，也不得直接修改 `main`。
+
 ## 固定依赖可用后的读取顺序
 
 1. 根 `README.md` 与本文件；
@@ -35,14 +37,16 @@ Agent 工作目录为本仓库根目录。先读取根 `README.md` 与本文件�
 - 用户说“进行项目初始化”或“初始化项目”：作为初始化入口别名，先判断是在完成小组首启，还是在已有小组中新增/完善具体项目。已有项目不重建，多个项目时不自行选择。只读请求下仅报告状态；已获授权的初始化直接按现有授权推进。
 - 用户给出已有任务编号：读取 `expression.task-loop` 入口，通过 `expression.task-record` 的 `show` 读取当前记录，核对状态、历史与产出，再读取该任务所属项目上下文；不要新建同一任务。
 - 用户提出新的真实需求：读取任务循环入口，登记未对齐草案并逐步讨论；明确是否属于某个已登记项目，或属于小组级工作。不要默认选择项目、把一个项目的事实用于其他项目，或为填字段虚构项目。
+- 用户要求制作 HTML 页面：按上述任务登记规则，通过 Manifest 中的 `expression.html-production` 读取 HTML 制作工作流；确认是否需要公式、显示模式、全屏和保存 PDF，再按需选择 `html.runtime-kit-v1`，不宣称所有页面会自动包含运行时按钮。
 - 用户仅要求调查：只读上下文、任务和共享能力，不创建业务任务或作品。
+- 用户要求检查或更新 submodule：路由到 Manifest 中显式声明的 `consumer.submodule-update`，遵守其确认、短期分支、验证和回退规则；没有该能力时只按版本协议报告，不自行补造工作流。
 
 ## Submodule 预检与版本
 
 每次启动时，Manifest 声明 `consumer.submodule-preflight` 的情况下，读取入口并从本仓库根目录执行只读预检：
 
 ```powershell
-py -3 vendor/suanhai-team-external-expression-infrastructure/tools/submodule-preflight/submodule_preflight.py --root . --path vendor/suanhai-team-external-expression-infrastructure
+py -3 vendor/suanhai-team-external-expression-infrastructure/infrastructure/repository-management/tools/submodule-preflight/submodule_preflight.py --root . --path vendor/suanhai-team-external-expression-infrastructure
 ```
 
 新空仓尚无父仓首次提交时，预检工具不能读取不存在的父仓 HEAD；按建立流程运行 `consumer.group-asset-bootstrap` 的 dry-run，核对 index gitlink 与 submodule HEAD。可以先完成初始化访谈，不为通过预检擅自提交。首次提交后的日常启动使用上面的预检。
@@ -71,4 +75,4 @@ py -3 vendor/suanhai-team-external-expression-infrastructure/tools/submodule-pre
 
 提交、推送、部署、对外发送和发布必须有相应用户授权；已有授权在其范围内继续有效，不重复请求。用户确认任务产物不自动代表专业验收或对外发布授权。
 
-详细启动协议见 `vendor/suanhai-team-external-expression-infrastructure/docs/consumer-repository-bootstrap.md`；新仓初始化访谈见 `vendor/suanhai-team-external-expression-infrastructure/harness/group-asset-repository/ENTRYPOINT.md`。
+详细启动协议见 `vendor/suanhai-team-external-expression-infrastructure/docs/consumer-repository-bootstrap.md`；新仓初始化访谈见 `vendor/suanhai-team-external-expression-infrastructure/workflows/group-asset-repository-onboarding/ENTRYPOINT.md`。
